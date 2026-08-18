@@ -4,6 +4,16 @@
 
 ## v0.1.1
 
+### 本次补充：项目结构文档
+
+- 新增 `docs/API.md`，整理管理端、商户下单、支付页、二维码、到账通知、回调、指标和更新接口。
+- 新增 `docs/ARCHITECTURE.md`，说明 API、Redis、PostgreSQL、worker 的组件关系和订单数据流。
+- 新增 `docs/DEPLOYMENT.md`，说明 Docker Compose、Linux 源码部署、systemd、Nginx、备份和升级。
+- 新增 `docs/SECURITY.md`，集中说明密钥、订单、二维码、SSRF、WAF、CORS 和部署安全。
+- 新增 `docs/TROUBLESHOOTING.md`，整理 API、worker、Cookie、二维码、到账通知、回调和镜像故障排查。
+- 新增 `docs/DEVELOPMENT.md`，说明开发初始化、测试命令、修改规范和版本提交流程。
+- README 增加结构文档索引，方便用户按场景查阅。
+
 ### 本次补充：部署配置文档
 
 - README 增加 Docker Compose 独立配置示例，明确 `postgres` 和 `redis` 容器服务名不能改为 `localhost`。

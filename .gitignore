@@ -9,3 +9,4 @@ frontend/dist/
 data/
 .idea/
 .vscode/
+.local-notes/

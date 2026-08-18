@@ -240,6 +240,15 @@ docker compose config --quiet
 
 - [VERSIONS.md](VERSIONS.md)：每次版本的详细功能、修复、验证结果和已知限制。
 
+## 文档索引
+
+- [API 接口文档](docs/API.md)
+- [系统设计文档](docs/ARCHITECTURE.md)
+- [部署文档](docs/DEPLOYMENT.md)
+- [安全模型](docs/SECURITY.md)
+- [故障排查](docs/TROUBLESHOOTING.md)
+- [开发指南](docs/DEVELOPMENT.md)
+
 ## 许可证
 
 本项目处于开发和安全验证阶段。使用前请确认符合当地法律、支付平台规则和收款账户要求。软件按“原样”提供，不承诺规避平台风控或替代官方支付接口。
