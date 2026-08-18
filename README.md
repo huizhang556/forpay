@@ -22,7 +22,7 @@ ForPay 是一个面向个人和小团队的本地收款码支付网关。它不�
 - Ed25519 签名更新清单检查，但不会自动执行远程代码。
 - Docker Compose 编排 API、worker、PostgreSQL 和 Redis，支持 Linux 快速部署。
 
-版本变更见 [v0.1.0 详细功能记录](docs/release-v0.1.0.md) 和 GitHub Releases。
+版本变更见 [VERSIONS.md](VERSIONS.md)，每个版本的具体功能、修复和验证结果都集中记录在这里。
 
 ## 技术栈
 
@@ -47,6 +47,8 @@ ForPay 是一个面向个人和小团队的本地收款码支付网关。它不�
 公网部署需要域名、HTTPS 证书和 Nginx。PostgreSQL、Redis 和应用端口不能直接暴露到公网。
 
 ## 部署前配置
+
+完整的逐步部署教程、必选/建议/可选配置说明、systemd 服务和 Nginx 配置已写入本 README，生产部署不要跳过配置分级和上线检查清单。
 
 ```bash
 cp .env.example .env
@@ -114,7 +116,7 @@ cd frontend && npm ci && npm run build && cd ..
 uv run alembic -c alembic.ini upgrade head
 ```
 
-使用专用非 root 用户分别运行 API 和 worker，配置 systemd 的 `Restart=on-failure`、`NoNewPrivileges=true` 和最小 `ReadWritePaths`。完整配置见 [Linux 部署文档](docs/deployment-linux.md)。
+使用专用非 root 用户分别运行 API 和 worker，配置 systemd 的 `Restart=on-failure`、`NoNewPrivileges=true` 和最小 `ReadWritePaths`。
 
 ## Nginx 反向代理
 
@@ -158,7 +160,7 @@ server {
 - 管理令牌、监控令牌、商户密钥和数据库备份必须单独保管并定期轮换。
 - 正式承载资金前必须完成 DNS 级 SSRF 防护、管理员 RBAC、Android 设备凭据、故障演练和备份恢复演练。
 
-详细要求见 [安全文档](docs/security.md)。
+详细要求见本 README 的“安全边界”和“部署前配置”章节。
 
 ## 在线更新
 
@@ -173,16 +175,9 @@ cd frontend && npm ci && npm run build && cd ..
 docker compose config --quiet
 ```
 
-## 文档索引
+## 版本记录
 
-- [API 集成说明](docs/api.md)
-- [Linux 部署和 Nginx 配置](docs/deployment-linux.md)
-- [安全模型](docs/security.md)
-- [系统架构](docs/architecture.md)
-- [运维、备份和监控](docs/operations.md)
-- [路线图和上线前检查](docs/roadmap.md)
-- [v0.1.1 详细功能记录](docs/release-v0.1.1.md)
-- [v0.1.0 详细功能记录](docs/release-v0.1.0.md)
+- [VERSIONS.md](VERSIONS.md)：每次版本的详细功能、修复、验证结果和已知限制。
 
 ## 许可证
 
