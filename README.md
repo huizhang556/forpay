@@ -64,6 +64,7 @@ chmod 600 .env
 | `FORPAY_SESSION_SECRET` | 会话和敏感数据密钥 |
 | `FORPAY_ADMIN_TOKEN` | 管理员登录令牌 |
 | `FORPAY_MONITOR_TOKEN` | 到账监控令牌 |
+| `FORPAY_ENCRYPTION_KEY` | 敏感数据加密密钥，生产必填且不能与其他密钥复用 |
 | `FORPAY_ORDER_TTL_MINUTES` | 订单有效期，建议 10 至 15 分钟 |
 | `FORPAY_AMOUNT_SUFFIX_CENTS` | 金额尾数步长 |
 | `FORPAY_UPDATE_MANIFEST_URL` | 签名更新清单地址，留空关闭检查 |
@@ -72,6 +73,36 @@ chmod 600 .env
 生产环境会拒绝默认密钥。不要把 `.env`、数据库、二维码、备份和真实到账通知提交到 Git。
 
 ## Docker Compose 部署（推荐）
+
+### Docker Compose 配置示例
+
+Compose 容器之间使用服务名通信，`FORPAY_DATABASE_URL` 中的主机必须是 `postgres`，`FORPAY_REDIS_URL` 中的主机必须是 `redis`。下面示例中的域名和所有密钥都必须替换：
+
+```dotenv
+FORPAY_APP_NAME=ForPay
+FORPAY_ENVIRONMENT=production
+FORPAY_PUBLIC_BASE_URL=https://pay.example.com
+FORPAY_DATABASE_URL=postgresql+psycopg://forpay:修改数据库密码@postgres:5432/forpay
+FORPAY_REDIS_URL=redis://redis:6379/0
+FORPAY_CORS_ORIGINS=https://pay.example.com
+FORPAY_SESSION_SECRET=替换为至少32位随机字符串
+FORPAY_ADMIN_TOKEN=替换为至少24位管理员随机令牌
+FORPAY_MONITOR_TOKEN=替换为至少24位监控随机令牌
+FORPAY_ENCRYPTION_KEY=替换为独立加密随机密钥
+FORPAY_ORDER_TTL_MINUTES=15
+FORPAY_AMOUNT_SUFFIX_CENTS=1
+FORPAY_MAX_BODY_MB=8
+FORPAY_RATE_LIMIT_PER_MINUTE=60
+FORPAY_DB_POOL_SIZE=10
+FORPAY_DB_MAX_OVERFLOW=20
+FORPAY_DB_POOL_TIMEOUT=30
+FORPAY_METRICS_ENABLED=true
+FORPAY_WAF_ENABLED=true
+FORPAY_UPDATE_MANIFEST_URL=
+FORPAY_UPDATE_PUBLIC_KEY=
+```
+
+`FORPAY_SESSION_SECRET`、`FORPAY_ADMIN_TOKEN`、`FORPAY_MONITOR_TOKEN` 和 `FORPAY_ENCRYPTION_KEY` 必须是四个不同的随机值。不要照抄示例中的占位文字；可以使用 `openssl rand -hex 32` 生成。
 
 ### 安装和启动
 
@@ -106,6 +137,36 @@ docker compose up -d
 ## Linux 源码部署
 
 源码部署适合需要审查和修改代码的场景，生产环境仍建议优先使用 Compose。安装 Python 3.12、Node.js 20、PostgreSQL 16、Redis 7、Nginx 和 uv，然后执行：
+
+### Linux 源码部署配置示例
+
+源码部署时 PostgreSQL 和 Redis 通常运行在本机，因此连接地址使用 `127.0.0.1`，不能继续使用 Compose 的 `postgres` 和 `redis` 服务名：
+
+```dotenv
+FORPAY_APP_NAME=ForPay
+FORPAY_ENVIRONMENT=production
+FORPAY_PUBLIC_BASE_URL=https://pay.example.com
+FORPAY_DATABASE_URL=postgresql+psycopg://forpay:修改数据库密码@127.0.0.1:5432/forpay
+FORPAY_REDIS_URL=redis://127.0.0.1:6379/0
+FORPAY_CORS_ORIGINS=https://pay.example.com
+FORPAY_SESSION_SECRET=替换为至少32位随机字符串
+FORPAY_ADMIN_TOKEN=替换为至少24位管理员随机令牌
+FORPAY_MONITOR_TOKEN=替换为至少24位监控随机令牌
+FORPAY_ENCRYPTION_KEY=替换为独立加密随机密钥
+FORPAY_ORDER_TTL_MINUTES=15
+FORPAY_AMOUNT_SUFFIX_CENTS=1
+FORPAY_MAX_BODY_MB=8
+FORPAY_RATE_LIMIT_PER_MINUTE=60
+FORPAY_DB_POOL_SIZE=10
+FORPAY_DB_MAX_OVERFLOW=20
+FORPAY_DB_POOL_TIMEOUT=30
+FORPAY_METRICS_ENABLED=true
+FORPAY_WAF_ENABLED=true
+FORPAY_UPDATE_MANIFEST_URL=
+FORPAY_UPDATE_PUBLIC_KEY=
+```
+
+源码部署必须先在 PostgreSQL 中创建 `forpay` 用户和数据库，再执行 Alembic 迁移。API 和 worker 使用同一个 `.env`，不要为 worker 创建另一套密钥。`.env` 文件应属于运行用户并设置为 `chmod 600`。
 
 ```bash
 git clone https://github.com/huizhang556/forpay.git
