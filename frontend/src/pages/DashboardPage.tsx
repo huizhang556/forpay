@@ -1,0 +1,10 @@
+import { useEffect, useState } from 'react'
+import { Card, Col, Row, Statistic, Typography } from 'antd'
+import { ArrowUpRight, CircleDollarSign, Clock3, CreditCard, ShieldCheck } from 'lucide-react'
+import { getDashboard } from '../lib/api'
+import type { Dashboard } from '../types'
+export function DashboardPage() {
+  const [data, setData] = useState<Dashboard>()
+  useEffect(() => { getDashboard().then(setData).catch(() => undefined) }, [])
+  return <div><div className="page-heading"><div><Typography.Text className="eyebrow">OVERVIEW / 实时概览</Typography.Text><Typography.Title>收款工作台</Typography.Title><Typography.Paragraph>把每一笔到账，都变成可追踪的业务事件。</Typography.Paragraph></div><div className="live-pill"><span />系统运行中</div></div><Row gutter={[18, 18]}><Col xs={24} sm={12} lg={6}><Card className="metric-card accent"><Statistic title="累计到账" value={data?.paid_amount ?? '0.00'} prefix="¥" /></Card></Col><Col xs={24} sm={12} lg={6}><Card className="metric-card"><Statistic title="已完成订单" value={data?.paid_orders ?? 0} prefix={<CircleDollarSign size={18} />} suffix="笔" /></Card></Col><Col xs={24} sm={12} lg={6}><Card className="metric-card"><Statistic title="待支付订单" value={data?.waiting_orders ?? 0} prefix={<Clock3 size={18} />} suffix="笔" /></Card></Col><Col xs={24} sm={12} lg={6}><Card className="metric-card"><Statistic title="订单总量" value={data?.orders ?? 0} prefix={<CreditCard size={18} />} suffix="笔" /></Card></Col></Row><Row gutter={[18, 18]} className="content-row"><Col xs={24} lg={15}><Card className="insight-card"><div className="card-title"><span>支付链路</span><ArrowUpRight size={18} /></div><div className="flow"><div><b>01</b><strong>创建订单</strong><small>分配唯一金额尾数</small></div><i>→</i><div><b>02</b><strong>用户支付</strong><small>展示微信 / 支付宝二维码</small></div><i>→</i><div><b>03</b><strong>自动核验</strong><small>通知匹配并触发回调</small></div></div></Card></Col><Col xs={24} lg={9}><Card className="insight-card security"><ShieldCheck size={24} /><div><b>安全边界</b><p>所有通知保留原始事件，重复通知不会重复入账。</p></div></Card></Col></Row></div>
+}

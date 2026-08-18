@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/statustag.tsx","./src/lib/api.ts","./src/pages/channelspage.tsx","./src/pages/dashboardpage.tsx","./src/pages/loginpage.tsx","./src/pages/orderspage.tsx","./src/pages/paypage.tsx","./src/types/index.ts"],"version":"5.8.3"}
