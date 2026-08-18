@@ -71,11 +71,6 @@ def require_monitor_token(x_forpay_monitor_token: str | None = Header(default=No
         raise HTTPException(status_code=401, detail="监控端令牌无效")
 
 
-@router.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "service": "forpay"}
-
-
 @router.post("/products", response_model=ProductRead, status_code=201)
 def add_product(payload: ProductCreate, _: None = Depends(require_admin_token), db: Session = Depends(get_db)):
     product = Product(**payload.model_dump())

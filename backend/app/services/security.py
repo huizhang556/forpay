@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 
 def _fernet() -> Fernet:
-    digest = hashlib.sha256(get_settings().session_secret.encode()).digest()
+    digest = hashlib.sha256((get_settings().encryption_key or get_settings().session_secret).encode()).digest()
     return Fernet(base64.urlsafe_b64encode(digest))
 
 

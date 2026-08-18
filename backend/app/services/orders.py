@@ -1,5 +1,6 @@
 import ipaddress
 import secrets
+import socket
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from urllib.parse import urlparse
@@ -21,6 +22,8 @@ def _validate_callback_url(url: str | None) -> None:
     if get_settings().environment != "development" and parsed.scheme != "https":
         raise ValueError("生产环境回调地址必须使用 HTTPS")
     hostname = parsed.hostname.lower()
+    if parsed.username or parsed.password:
+        raise ValueError("callback URL contains invalid authority")
     if hostname in {"localhost", "metadata.google.internal"}:
         raise ValueError("回调地址不能指向本机或云元数据服务")
     try:
@@ -30,6 +33,15 @@ def _validate_callback_url(url: str | None) -> None:
     except ValueError as exc:
         if str(exc).startswith("回调地址"):
             raise
+
+        try:
+            resolved = socket.getaddrinfo(hostname, parsed.port or 443, type=socket.SOCK_STREAM)
+        except socket.gaierror as resolve_error:
+            raise ValueError("callback hostname could not be resolved") from resolve_error
+        for item in resolved:
+            resolved_address = ipaddress.ip_address(item[4][0])
+            if resolved_address.is_private or resolved_address.is_loopback or resolved_address.is_link_local or resolved_address.is_reserved or resolved_address.is_unspecified:
+                raise ValueError("callback hostname resolves to a private or reserved address") from None
 
 
 def _next_display_amount(db: Session, channel_id: int, amount: Decimal) -> Decimal:

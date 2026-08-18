@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 60
     update_manifest_url: str | None = None
     update_public_key: str | None = None
+    encryption_key: str | None = None
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
+    db_pool_timeout: int = 30
+    metrics_enabled: bool = True
+    waf_enabled: bool = True
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -31,6 +37,11 @@ class Settings(BaseSettings):
             return
         defaults = {"change-this-in-development", "local-development-only", "local-admin-token", "local-monitor-token"}
         if self.session_secret in defaults or self.admin_token in defaults or self.monitor_token in defaults:
+            raise RuntimeError("production secrets must be replaced")
+        if len(self.session_secret) < 32 or len(self.admin_token) < 24 or len(self.monitor_token) < 24:
+            raise RuntimeError("production secrets are too short")
+        if not self.encryption_key:
+            raise RuntimeError("FORPAY_ENCRYPTION_KEY is required in production")
             raise RuntimeError("生产环境必须修改 FORPAY_SESSION_SECRET、FORPAY_ADMIN_TOKEN 和 FORPAY_MONITOR_TOKEN")
 
 

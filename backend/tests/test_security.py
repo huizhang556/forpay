@@ -31,3 +31,13 @@ def test_checkout_session_is_order_bound():
     first = checkout_session_value("order-a")
     assert first != checkout_session_value("order-b")
     assert len(first) == 64
+
+
+def test_metrics_endpoint_requires_admin_token():
+    response = TestClient(app).get("/metrics")
+    assert response.status_code == 404
+
+
+def test_basic_waf_blocks_encoded_sql_probe():
+    response = TestClient(app).get("/api/health?query=union%20select%201")
+    assert response.status_code == 403

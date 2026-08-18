@@ -55,3 +55,6 @@
 - Both payment QR endpoints require this cookie, return `403` without it, send `Cache-Control: no-store`, and are covered by the Redis distributed request limiter.
 - The cookie reduces direct URL scraping and replay after a URL leak. It cannot prevent a person from photographing or forwarding a QR image that is already visible on a trusted checkout screen; use short order TTLs, exact display-amount matching, and notification deduplication as the financial controls.
 - Do not put QR images in logs, analytics, screenshots, public documentation, or CDN caches. Configure the reverse proxy to preserve `Set-Cookie` and avoid caching `/api/public/orders/*`.
+- Production encryption uses a dedicated `FORPAY_ENCRYPTION_KEY`; changing it requires a planned key migration. Default or short secrets are rejected outside development.
+- Callback hosts are resolved before use, private/reserved results are rejected, and callback redirects are disabled. DNS-level egress policy is still recommended at the host or network layer.
+- The built-in WAF middleware is a low-cost request filter, not a replacement for a managed WAF. Put Nginx, a cloud WAF, or equivalent rules in front of the service.
