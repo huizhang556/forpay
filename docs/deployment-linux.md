@@ -1,24 +1,24 @@
-# Linux deployment
+# Linux 部署
 
-ForPay supports Linux Docker Compose deployment and Linux source deployment. Windows deployment is intentionally out of scope.
+ForPay 只提供 Linux 部署说明，包含 Docker Compose 和源码两种方式，不提供 Windows 部署方案。生产环境必须使用 HTTPS，并将 PostgreSQL、Redis 和应用端口限制在内网或回环地址。
 
-## Docker Compose
+## Docker Compose 部署
 
-1. Install Docker Engine and the Compose plugin.
-2. Copy `.env.example` to `.env` and replace every production secret with random values.
-3. Set `FORPAY_PUBLIC_BASE_URL` to the HTTPS URL exposed by Nginx.
-4. Start the stack: `docker compose up -d --build`.
-5. Verify with `docker compose ps`, `docker compose logs app`, and `curl http://127.0.0.1:8000/api/health`.
+1. 安装 Docker Engine 和 Compose 插件。
+2. 复制 `.env.example` 为 `.env`，并替换所有生产密钥。
+3. 将 `FORPAY_PUBLIC_BASE_URL` 设置为 Nginx 对外提供的 HTTPS 地址。
+4. 启动服务：`docker compose up -d --build`。
+5. 检查状态：`docker compose ps`、`docker compose logs app`，并执行 `curl http://127.0.0.1:8000/api/health`。
 
-The compose file binds API, PostgreSQL, and Redis to loopback only. Do not remove those bindings when Nginx is used. Back up the PostgreSQL volume and `data/` before upgrades.
+Compose 文件默认只把 API、PostgreSQL 和 Redis 绑定到 `127.0.0.1`。使用 Nginx 时不要删除这个限制。升级前必须备份 PostgreSQL 数据卷和 `data/` 目录。
 
-## Source deployment
+## 源码部署
 
-Install Python 3.12+, PostgreSQL 16, Redis 7, Node.js 20+, and Nginx. Create a dedicated unprivileged `forpay` user, install backend dependencies with `uv sync --extra dev`, build the frontend with `npm ci && npm run build`, and run Alembic migrations before starting Uvicorn. Run Uvicorn and the worker as separate systemd services with restrictive `ReadWritePaths` for `data/` only. Never run either process as root.
+安装 Python 3.12、PostgreSQL 16、Redis 7、Node.js 20 和 Nginx。创建专用的非 root 用户，执行 `uv sync --extra dev` 安装后端依赖，执行 `npm ci && npm run build` 构建前端，运行 Alembic 迁移后再启动 Uvicorn。Uvicorn 和 worker 应作为两个 systemd 服务运行，并用 `ReadWritePaths` 只允许写入 `data/`。任何应用进程都不能以 root 运行。
 
-## Nginx reverse proxy
+## Nginx 反向代理
 
-Use HTTPS (for example, Certbot) and proxy only the API and frontend:
+使用 Certbot 等工具配置 HTTPS，只把前端和 API 代理到 ForPay：
 
 ```nginx
 server {
@@ -46,8 +46,8 @@ server {
 }
 ```
 
-Do not cache `/api/public/orders/`, `/api/monitor/`, or admin responses. Keep PostgreSQL, Redis, and port 8000 unreachable from the public interface. Set `FORPAY_CORS_ORIGINS` to the exact frontend origin, not `*`.
+不要缓存 `/api/public/orders/`、`/api/monitor/` 和管理端响应。PostgreSQL、Redis 和 8000 端口不能暴露到公网。`FORPAY_CORS_ORIGINS` 必须填写准确的前端来源，不能设置为 `*`。
 
-## Signed online updates
+## 签名在线更新
 
-The admin endpoint `GET /api/admin/update/check` only accepts a manifest fetched over HTTPS and verified with an Ed25519 public key. The manifest signature covers canonical JSON (all fields except `signature`) and must include `version`, `url`, `sha256`, and optional `notes`. ForPay never executes downloaded code automatically. Review the signed release, verify the package digest, back up the database and `data/`, then deploy the image or source through the normal release process and roll back if health checks fail. Leave update settings empty to disable remote checking.
+管理接口 `GET /api/admin/update/check` 只检查通过 HTTPS 获取并经 Ed25519 公钥验证的更新清单。清单签名覆盖除 `signature` 外的规范化 JSON，必须包含 `version`、`url`、`sha256`，可选 `notes`。ForPay 永不自动执行下载代码；管理员必须人工审核签名、校验摘要、备份数据库和 `data/`，再按正常发布流程升级。将更新配置留空即可关闭远程检查。

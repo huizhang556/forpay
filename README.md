@@ -57,3 +57,27 @@ ForPay 是一个面向个人和小团队的现代化二维码支付网关原型�
 生产环境必须修改 FORPAY_SESSION_SECRET、FORPAY_ADMIN_TOKEN 和 FORPAY_MONITOR_TOKEN。商户下单使用 X-ForPay-Key、X-ForPay-Timestamp、X-ForPay-Signature，并建议每个请求携带唯一的 X-Idempotency-Key。到账通知接口不接受匿名请求，未来 Android 监控端必须安全保存监控令牌。
 
 Docker Compose 会单独启动 worker 处理待发送回调；API 可以横向扩展，限流计数存储在 Redis 中。
+
+## 部署与文档索引
+
+- [Linux 部署、源码部署和 Nginx 配置](docs/deployment-linux.md)
+- [API 集成说明](docs/api.md)
+- [安全模型与二维码防泄露措施](docs/security.md)
+- [系统架构](docs/architecture.md)
+- [运维、备份和监控](docs/operations.md)
+- [路线图、上线前检查和已知短板](docs/roadmap.md)
+
+## 本次版本包含的完整功能
+
+本版本不是官方支付 API 的替代品，而是“收款二维码 + 唯一展示金额 + 到账通知确认”的过渡网关，具体包含：
+
+1. 微信和支付宝收款二维码通道管理及上传校验，二维码文件不通过公开静态目录暴露。
+2. 订单专属高熵 token、短期 checkout 会话 Cookie、二维码接口限流和禁止缓存，降低订单链接及二维码地址被盗用的风险。
+3. PostgreSQL 金额精度、并发金额尾数分配、订单过期、通知去重、通道和金额精确匹配。
+4. 管理员人工补单保护：通知状态、通道、展示金额和订单状态必须全部满足，补单写入审计事件并进入回调队列。
+5. 商户 API Key、HMAC 时间戳签名、幂等键、回调签名、回调重试、SSRF 基础防护和 Redis 分布式限流。
+6. 产品下单、公开支付页面、易支付兼容入口，以及为后续 Android 通知监控预留的独立令牌边界。
+7. Docker Compose 的 API、worker、PostgreSQL、Redis 服务编排，Linux 源码部署方式和 Nginx 反向代理配置。
+8. Ed25519 签名更新清单检查。在线更新只检查版本和摘要，不会在 API 进程中自动执行远程代码。
+
+正式承载资金前，必须完成 `docs/roadmap.md` 中列出的 DNS 级 SSRF 防护、管理员 RBAC、Android 设备凭据、故障演练、备份恢复演练和人工补单双人审批。
