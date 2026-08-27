@@ -28,6 +28,8 @@ services:
     command: ["python", "-m", "app.worker"]
     depends_on:
       app: {condition: service_healthy}
+    healthcheck:
+      disable: true
     restart: unless-stopped
   postgres:
     image: postgres:16-alpine

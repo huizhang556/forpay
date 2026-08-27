@@ -18,6 +18,11 @@
 - README 新增统一部署总流程和上线前检查清单。
 - 明确必选、建议和可选配置的优先级，补充健康检查、备份、升级和回滚前置要求。
 
+### 本次修复：Compose 镜像切换与 worker 健康检查
+
+- 修复旧容器仍引用 `forpay-app`、`forpay-worker` 的问题，重新创建后统一使用 `forpay:latest`。
+- 禁用 worker 继承的 API 健康检查，避免 worker 因不监听 8000 端口被错误标记为 unhealthy。
+
 ### 本次修复：旧版数据库启动迁移兼容
 
 - 修复旧部署使用 `create_all` 创建表但缺少 `alembic_version` 时，启动重复建表导致 `DuplicateTable` 和 app unhealthy 的问题。
