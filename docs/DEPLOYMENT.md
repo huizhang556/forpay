@@ -6,7 +6,7 @@ ForPay 只支持 Linux。推荐 Docker Compose；需要二次开发时使用 Lin
 
 必选配置：`FORPAY_ENVIRONMENT`、`FORPAY_PUBLIC_BASE_URL`、`FORPAY_DATABASE_URL`、`FORPAY_REDIS_URL`、`FORPAY_SESSION_SECRET`、`FORPAY_ADMIN_TOKEN`、`FORPAY_MONITOR_TOKEN`、`FORPAY_ENCRYPTION_KEY` 和准确的 `FORPAY_CORS_ORIGINS`。
 
-建议配置：订单有效期、金额尾数、请求体限制、Redis 限流、数据库连接池、WAF 和 Prometheus 指标。在线更新地址和 Ed25519 公钥是可选配置。
+建议配置：订单有效期、金额尾数、请求体限制、Redis 限流、数据库连接池、WAF 和 Prometheus 指标。
 
 ## Docker Compose
 
@@ -25,7 +25,7 @@ Compose 中数据库主机必须是 `postgres`，Redis 主机必须是 `redis`�
 
 上述命令使用 Docker Hub 远程镜像，app 和 worker 默认显示为 `litehub/forpay:latest`。API 默认绑定宿主机 `127.0.0.1:7500`，可通过 `.env` 的 `FORPAY_API_PORT` 修改。生产环境如需固定版本，可在 `.env` 中改为具体版本或 digest。源码构建时在 `.env` 设置 `FORPAY_IMAGE=forpay:local`，跳过 `docker compose pull`，执行 `docker compose build` 后再 `docker compose up -d`。
 
-若出现端口已占用，使用 `docker ps --filter publish=8000` 或 `ss -ltnp | grep :8000` 查找占用者。确认是旧 ForPay 容器后执行 `docker compose down`（不要使用 `down -v`）；其他服务占用时，将 `FORPAY_API_PORT` 改为未占用端口，并同步修改 Nginx upstream。
+Compose 部署必须在 `.env` 设置强随机 `POSTGRES_PASSWORD`；API 和 worker 会使用该值连接 `postgres` 容器。若出现端口已占用，使用 `docker ps --filter publish=7500` 或 `ss -ltnp | grep :7500` 查找占用者。确认是旧 ForPay 容器后执行 `docker compose down`（不要使用 `down -v`）；其他服务占用时，将 `FORPAY_API_PORT` 改为未占用端口，并同步修改 Nginx upstream。
 
 启动时会先执行 `scripts/migrate.py`。如果数据库是早期版本通过 SQLAlchemy `create_all` 创建的完整表结构、但 `alembic_version` 为空，脚本会只写入当前版本标记，不删除或重建业务表；全新数据库仍会正常执行全部 Alembic migration。
 
