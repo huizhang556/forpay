@@ -58,8 +58,28 @@ def authenticate_signature(
     return record if hmac.compare_digest(expected, signature) else None
 
 
-def admin_session_value() -> str:
-    return hmac.new(get_settings().admin_token.encode(), b"forpay-admin-session", hashlib.sha256).hexdigest()
+def admin_session_value(timestamp: int | None = None) -> str:
+    """Create a short-lived, tamper-evident admin session token."""
+    issued_at = int(time.time()) if timestamp is None else int(timestamp)
+    nonce = secrets.token_urlsafe(18)
+    payload = f"{issued_at}.{nonce}".encode()
+    signature = hmac.new(get_settings().admin_token.encode(), b"forpay-admin-session:" + payload, hashlib.sha256).hexdigest()
+    return f"{issued_at}.{nonce}.{signature}"
+
+
+def verify_admin_session(value: str | None, max_age: int = 3600) -> bool:
+    if not value:
+        return False
+    try:
+        issued_text, nonce, signature = value.split(".", 2)
+        issued_at = int(issued_text)
+    except (TypeError, ValueError):
+        return False
+    if not nonce or len(signature) != 64 or abs(int(time.time()) - issued_at) > max_age:
+        return False
+    payload = f"{issued_at}.{nonce}".encode()
+    expected = hmac.new(get_settings().admin_token.encode(), b"forpay-admin-session:" + payload, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
 
 
 def checkout_session_value(public_token: str) -> str:

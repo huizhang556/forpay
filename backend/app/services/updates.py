@@ -1,6 +1,8 @@
 import base64
 import hashlib
+import ipaddress
 import json
+import socket
 from urllib.parse import urlparse
 
 import httpx
@@ -18,8 +20,17 @@ def _https_url(value: str) -> str:
     parsed = urlparse(value)
     if parsed.scheme != "https" or not parsed.hostname:
         raise UpdateError("update URLs must use HTTPS")
-    if parsed.hostname.lower() in {"localhost", "metadata.google.internal"}:
+    if parsed.username or parsed.password or parsed.port not in (None, 443):
+        raise UpdateError("update URL must use HTTPS without credentials or custom ports")
+    hostname = parsed.hostname.rstrip(".").lower()
+    if hostname in {"localhost", "metadata.google.internal"}:
         raise UpdateError("update URL host is not allowed")
+    try:
+        addresses = {item[4][0] for item in socket.getaddrinfo(hostname, 443, type=socket.SOCK_STREAM)}
+    except OSError as exc:
+        raise UpdateError("update URL host cannot be resolved") from exc
+    if not addresses or any((ip := ipaddress.ip_address(address)).is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified for address in addresses):
+        raise UpdateError("update URL resolves to a non-public address")
     return value
 
 

@@ -4,6 +4,40 @@
 
 ## v0.1.1
 
+### 本次修复：镜像命名、管理会话与在线更新安全
+
+- Compose 构建的 app 与 worker 镜像统一命名为 `forpay`。
+- 仪表盘、订单列表和订单详情增加管理员鉴权，未登录请求统一返回 401。
+- 管理员会话改为带随机数、HMAC 签名和 1 小时有效期的 Cookie，新增会话探测与登出接口。
+- 前端启动时校验服务端登录状态，支持服务端登出后自动回到登录页。
+- 在线更新清单增加 HTTPS 凭据、自定义端口限制及 DNS 解析后的私网、回环、链路本地和保留地址拦截。
+- 增加登录、登出和敏感接口鉴权测试。
+
+### 本次文档优化：部署流程梳理
+
+- README 新增统一部署总流程和上线前检查清单。
+- 明确必选、建议和可选配置的优先级，补充健康检查、备份、升级和回滚前置要求。
+
+### 本次修复：旧版数据库启动迁移兼容
+
+- 修复旧部署使用 `create_all` 创建表但缺少 `alembic_version` 时，启动重复建表导致 `DuplicateTable` 和 app unhealthy 的问题。
+- 增加 `scripts/migrate.py`：仅当检测到完整旧版 ForPay 表且没有迁移版本记录时执行 `stamp head`，新数据库仍执行正常 Alembic migration。
+- Docker 启动脚本改为固定调用兼容迁移入口，并在迁移失败时输出明确错误。
+
+### 本次修复：Docker 首次启动迁移
+
+- 修复 Docker 镜像遗漏 `alembic.ini` 导致 `No 'script_location' key found in configuration`、app 无法启动的问题。
+- Docker 启动命令显式使用 `/app/alembic.ini`，不再依赖当前工作目录查找 Alembic 配置。
+- README 增加首次启动迁移失败的排查提示。
+
+### 本次补充：启动脚本和生产配置修复
+
+- 增加独立 `scripts/start-api.sh`，固定在 `/app` 工作目录读取 `/app/alembic.ini`。
+- 启动前检查 Alembic 配置和 `script_location`，通过 `python -m alembic -c /app/alembic.ini upgrade head` 执行迁移。
+- 进一步避免因工作目录或默认配置错误导致的 Alembic 启动失败。
+- 移除 Compose 对 `FORPAY_CORS_ORIGINS` 的强制覆盖，生产环境可正确使用 `.env` 中的域名配置。
+- 增加 API 健康检查 `start_period`，避免数据库迁移期间被过早判定为 unhealthy。
+
 ### 本次补充：项目结构文档
 
 - 新增 `docs/API.md`，整理管理端、商户下单、支付页、二维码、到账通知、回调、指标和更新接口。

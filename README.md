@@ -72,6 +72,47 @@ chmod 600 .env
 
 生产环境会拒绝默认密钥。不要把 `.env`、数据库、二维码、备份和真实到账通知提交到 Git。
 
+## 一键本地开发
+
+本地开发只需要预先安装 Docker、uv 和 Node.js。脚本会自动创建 `.env`（不存在时）、启动 PostgreSQL/Redis、安装依赖、执行数据库迁移、启动 API 和前端，并尝试打开开发页面。开发日志写入被 Git 忽略的 `.local-notes/`，按 `Ctrl+C` 停止时不会删除数据库数据。
+
+Windows PowerShell：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/dev.ps1
+```
+
+Linux：
+
+```bash
+chmod +x scripts/dev.sh
+./scripts/dev.sh
+```
+
+启动成功后访问 `http://localhost:5173`，API 文档访问 `http://127.0.0.1:8000/docs`。只有需要自定义端口、数据库或密钥时才需要提前编辑 `.env`。
+
+## 部署总流程
+
+无论选择哪种方式，生产部署都按以下顺序执行：
+
+1. 准备 Linux 主机、域名和 HTTPS 证书，确认 PostgreSQL、Redis 与 API 端口不直接暴露公网。
+2. 获取源码并复制 `.env.example` 为 `.env`，先填写所有必选配置和四个独立随机密钥。
+3. 按部署方式启动 PostgreSQL、Redis、API 和 worker，并等待健康检查通过。
+4. 使用 `/api/health`、管理员登录和会话探测接口验证服务，再通过 Nginx 对外提供 HTTPS。
+5. 创建收款通道、上传二维码、创建商品并完成一笔测试订单，确认到账通知、金额匹配和回调链路。
+6. 上线后定期备份 PostgreSQL 与 `data/`，升级前先停写、备份、迁移，再执行回归检查。
+
+配置优先级：安全密钥、数据库、Redis、公开 HTTPS 地址和 CORS 是必选项；连接池、限流、WAF、指标和在线更新属于建议项；开发服务器和 API 文档仅限内网或本机使用。
+
+### 上线前检查清单
+
+- [ ] `FORPAY_ENVIRONMENT=production`，四个密钥均已替换且互不相同。
+- [ ] `FORPAY_PUBLIC_BASE_URL` 使用最终 HTTPS 域名，`FORPAY_CORS_ORIGINS` 只填写明确来源。
+- [ ] `.env` 权限为 `600`，运行用户不是 root；PostgreSQL、Redis 和 API 仅监听内网/回环地址。
+- [ ] `docker compose ps` 或 systemd 状态显示 app、worker、PostgreSQL、Redis 均正常。
+- [ ] 管理员登录、登出、会话过期、订单创建、二维码访问和到账通知均已实测。
+- [ ] 已完成数据库和 `data/` 备份，并验证备份文件可读取。
+
 ## Docker Compose 部署（推荐）
 
 ### Docker Compose 配置示例
@@ -118,6 +159,8 @@ docker compose up -d --build
 docker compose ps
 curl http://127.0.0.1:8000/api/health
 ```
+
+首次启动时 app 会先使用镜像内的 `/app/alembic.ini` 执行数据库迁移，再启动 API；如果 app 显示 unhealthy，先查看 `docker compose logs app` 中的迁移错误，不要直接删除数据库数据卷。
 
 Compose 会启动 `app`、`worker`、`postgres` 和 `redis`。API、数据库和 Redis 默认只绑定回环地址；不要改成 `0.0.0.0`。
 

@@ -4,6 +4,8 @@
 
 先查看 `docker compose logs app` 或 `journalctl -u forpay-api`。生产环境重点检查密钥长度、`FORPAY_ENCRYPTION_KEY`、数据库连接和 Alembic 迁移。
 
+如果日志出现 `DuplicateTable`、`payment_channels already exists` 或 `No 'script_location' key found`，先确认使用的是包含 `scripts/start-api.sh` 和 `scripts/migrate.py` 的最新镜像。旧数据库若已有完整表但没有迁移版本，应使用最新启动脚本自动写入版本标记；不要删除数据库卷，也不要手动执行 `down -v`。
+
 ## worker 反复重启
 
 查看 worker 日志，确认 `FORPAY_DATABASE_URL`、`FORPAY_REDIS_URL` 与 API 使用同一套配置，并检查 Redis 是否能执行 `redis-cli ping`。

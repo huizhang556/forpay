@@ -21,6 +21,8 @@ curl http://127.0.0.1:8000/api/health
 
 Compose 中数据库主机必须是 `postgres`，Redis 主机必须是 `redis`。生产环境只把 API 绑定到回环地址，由 Nginx 提供 443。升级前使用 `pg_dump` 备份数据库和 `data/` 目录，不要执行 `docker compose down -v`。
 
+启动时会先执行 `scripts/migrate.py`。如果数据库是早期版本通过 SQLAlchemy `create_all` 创建的完整表结构、但 `alembic_version` 为空，脚本会只写入当前版本标记，不删除或重建业务表；全新数据库仍会正常执行全部 Alembic migration。
+
 ## Linux 源码部署
 
 创建非 root 用户，安装 Python 3.12、Node.js 20、PostgreSQL 16、Redis 7、Nginx 和 uv。源码部署的数据库和 Redis 通常使用 `127.0.0.1`，不能使用 Compose 服务名：

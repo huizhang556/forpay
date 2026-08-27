@@ -34,6 +34,7 @@ from app.services.security import (
     authenticate_signature,
     checkout_session_value,
     create_api_key,
+    verify_admin_session,
 )
 from app.services.updates import UpdateError, check_update
 from fastapi import (
@@ -60,7 +61,7 @@ def require_admin_token(
 ) -> None:
     expected = get_settings().admin_token
     valid_header = x_forpay_admin_token and expected and secrets.compare_digest(expected, x_forpay_admin_token)
-    valid_cookie = forpay_admin and secrets.compare_digest(admin_session_value(), forpay_admin)
+    valid_cookie = verify_admin_session(forpay_admin)
     if not expected or not (valid_header or valid_cookie):
         raise HTTPException(status_code=401, detail="管理令牌无效")
 
@@ -171,8 +172,18 @@ def admin_login(payload: AdminLogin, response: Response):
     return {"authenticated": True}
 
 
+@router.post("/admin/logout")
+def admin_logout(response: Response):
+    response.delete_cookie("forpay_admin", httponly=True, secure=get_settings().environment != "development", samesite="strict")
+    return {"authenticated": False}
+
+@router.get("/admin/session")
+def admin_session(_: None = Depends(require_admin_token)):
+    return {"authenticated": True}
+
+
 @router.get("/dashboard")
-def dashboard(db: Session = Depends(get_db)) -> dict:
+def dashboard(_: None = Depends(require_admin_token), db: Session = Depends(get_db)) -> dict:
     total = db.scalar(select(func.count(Order.id))) or 0
     paid = db.scalar(select(func.count(Order.id)).where(Order.status == "paid")) or 0
     waiting = db.scalar(select(func.count(Order.id)).where(Order.status == "waiting_payment")) or 0
@@ -249,12 +260,12 @@ def add_order(payload: OrderCreate, _: None = Depends(require_admin_token), idem
 
 
 @router.get("/orders", response_model=list[OrderRead])
-def list_orders(limit: int = 50, db: Session = Depends(get_db)):
+def list_orders(limit: int = 50, _: None = Depends(require_admin_token), db: Session = Depends(get_db)):
     return db.scalars(select(Order).order_by(Order.created_at.desc()).limit(min(max(limit, 1), 200))).all()
 
 
 @router.get("/orders/{order_id}", response_model=OrderRead)
-def get_order(order_id: int, db: Session = Depends(get_db)):
+def get_order(order_id: int, _: None = Depends(require_admin_token), db: Session = Depends(get_db)):
     order = db.get(Order, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="订单不存在")

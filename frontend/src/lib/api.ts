@@ -2,6 +2,8 @@ import axios from 'axios'
 import type { Channel, Dashboard, Order } from '../types'
 const api = axios.create({ baseURL: '/api', withCredentials: true })
 export async function adminLogin(token: string) { return (await api.post('/admin/login', { token })).data }
+export async function adminSession() { return (await api.get('/admin/session')).data }
+export async function adminLogout() { return (await api.post('/admin/logout')).data }
 export async function getDashboard() { return (await api.get<Dashboard>('/dashboard')).data }
 export async function getChannels() { return (await api.get<Channel[]>('/channels')).data }
 export async function getOrders() { return (await api.get<Order[]>('/orders')).data }

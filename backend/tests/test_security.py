@@ -1,3 +1,4 @@
+from app.core.config import get_settings
 from app.main import app
 from app.services.orders import _validate_callback_url
 from app.services.security import checkout_session_value
@@ -41,3 +42,20 @@ def test_metrics_endpoint_requires_admin_token():
 def test_basic_waf_blocks_encoded_sql_probe():
     response = TestClient(app).get("/api/health?query=union%20select%201")
     assert response.status_code == 403
+
+
+def test_admin_login_session_and_logout():
+    client = TestClient(app)
+    token = get_settings().admin_token
+    login = client.post("/api/admin/login", json={"token": token})
+    assert login.status_code == 200
+    assert client.get("/api/admin/session").status_code == 200
+    logout = client.post("/api/admin/logout")
+    assert logout.status_code == 200
+    assert client.get("/api/admin/session").status_code == 401
+
+
+def test_sensitive_order_endpoints_require_admin_authentication():
+    client = TestClient(app)
+    assert client.get("/api/channels").status_code == 401
+    assert client.get("/api/products").status_code == 401
