@@ -6,6 +6,12 @@ cd "$ROOT"
 PURGE=false
 if [[ "${1:-}" == "--purge-data" ]]; then PURGE=true; fi
 
+if [[ "$PURGE" != true ]]; then
+    read -r -p "是否保留 PostgreSQL、Redis 和二维码数据？[Y/n]：" keep
+    keep="${keep:-Y}"
+    if [[ "$keep" =~ ^[Nn]$ ]]; then PURGE=true; fi
+fi
+
 if [[ "$PURGE" == true ]]; then
     echo "警告：这将停止服务并永久删除 PostgreSQL、Redis 数据卷。"
     read -r -p "请输入 DELETE-FORPAY 确认：" answer

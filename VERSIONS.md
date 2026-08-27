@@ -40,6 +40,11 @@
 - 新增 `scripts/uninstall.sh`：默认保留数据卷，只有输入 `DELETE-FORPAY` 并使用 `--purge-data` 才删除数据。
 - 安装脚本重复执行时保留已有数据库密码和密钥，避免破坏现有数据卷。
 
+### 卸载数据保留确认
+
+- 卸载脚本现在会交互询问是否保留 PostgreSQL、Redis 和二维码数据。
+- 选择删除数据时仍需输入 `DELETE-FORPAY` 二次确认；默认回车保留数据。
+
 ### 本次发布：部署、会话与更新安全完善
 
 - Compose 应用和 worker 镜像统一使用 `forpay`，并修复旧容器切换及 worker 健康检查问题。

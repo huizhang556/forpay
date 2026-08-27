@@ -166,14 +166,13 @@ chmod +x scripts/install.sh scripts/update.sh scripts/uninstall.sh
 ./scripts/update.sh
 ```
 
-普通卸载会保留数据卷；只有明确确认后才删除数据：
+卸载脚本会先询问是否保留数据。选择 `Y` 只移除容器并保留数据卷；选择 `N` 时还必须输入 `DELETE-FORPAY` 才会删除数据：
 
 ```bash
 ./scripts/uninstall.sh
-./scripts/uninstall.sh --purge-data
 ```
 
-`--purge-data` 会永久删除 PostgreSQL/Redis Docker 数据卷，执行前必须确认已有可用备份。
+也可以直接使用 `--purge-data` 进入删除确认流程。删除操作会永久删除 PostgreSQL/Redis Docker 数据卷，执行前必须确认已有可用备份。
 
 ```bash
 sudo apt update
