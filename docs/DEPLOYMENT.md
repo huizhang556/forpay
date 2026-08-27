@@ -15,12 +15,15 @@ cp .env.example .env
 chmod 600 .env
 nano .env
 docker compose pull
+docker compose config --images
 docker compose up -d
 docker compose ps
 curl http://127.0.0.1:8000/api/health
 ```
 
 Compose 中数据库主机必须是 `postgres`，Redis 主机必须是 `redis`。生产环境只把 API 绑定到回环地址，由 Nginx 提供 443。升级前使用 `pg_dump` 备份数据库和 `data/` 目录，不要执行 `docker compose down -v`。
+
+上述命令使用 Docker Hub 远程镜像，app 和 worker 应显示为 `litehub/forpay:0.1.2`。源码构建时在 `.env` 设置 `FORPAY_IMAGE=forpay:local`，跳过 `docker compose pull`，执行 `docker compose build` 后再 `docker compose up -d`。
 
 启动时会先执行 `scripts/migrate.py`。如果数据库是早期版本通过 SQLAlchemy `create_all` 创建的完整表结构、但 `alembic_version` 为空，脚本会只写入当前版本标记，不删除或重建业务表；全新数据库仍会正常执行全部 Alembic migration。
 
