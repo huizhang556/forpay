@@ -59,6 +59,12 @@
 - 增加三种方式的适用对象、特点、前置条件和命令入口说明。
 - 区分脚本自动安装流程与手动 Compose 流程，补充卸载数据保留提示。
 
+### 镜像与端口部署修正
+
+- 修正远程镜像部署流程，使用 `docker compose pull` 后再启动，源码构建单独使用 `FORPAY_IMAGE=forpay:local`。
+- 增加 `docker compose config --images` 镜像来源核对，远程部署默认使用 `litehub/forpay:latest`。
+- 增加可配置的 `FORPAY_API_PORT`，并将 API 宿主机默认端口统一调整为 7500，同步前端代理、健康检查和 Nginx 示例。
+
 ### 面向用户移除本地开发入口
 
 - 删除 README 中“一键本地开发”章节及 Windows/Linux 开发启动命令。
@@ -82,6 +88,8 @@
 - README 明确说明安装、更新、卸载脚本位于仓库根目录 `scripts/` 文件夹。
 - 增加 GitHub 克隆、进入项目目录和脚本直接链接，用户无需猜测脚本位置。
 
+## v0.1.2
+
 ### 本次发布：部署、会话与更新安全完善
 
 - Compose 应用和 worker 镜像统一使用 `forpay`，并修复旧容器切换及 worker 健康检查问题。
@@ -89,11 +97,6 @@
 - 在线更新清单增加 HTTPS、DNS 解析和非公网地址 SSRF 防护。
 - README 补充统一部署流程、配置分级和生产上线检查清单。
 - 增加登录、登出和敏感接口鉴权测试，完成后端、前端和 Compose 构建验证。
-- 修正部署文档：远程镜像使用 `docker compose pull` 后再启动，源码构建单独使用 `FORPAY_IMAGE=forpay:local` 和 `docker compose build`，避免 `--build` 误导远程部署。
-- 补充 `docker compose config --images` 镜像来源核对，明确远程拉取与本地源码构建的分界。
-- 远程部署默认镜像改为 `litehub/forpay:latest`，确保用户拉取远端持续发布的最新版本；生产环境仍可固定具体版本或 digest。
-- 增加可配置的 `FORPAY_API_PORT`，补充端口占用排查、切换和 Nginx upstream 同步说明。
-- 将 API 宿主机默认端口由 8000 调整为 7500，并同步开发代理、健康检查和 Nginx 示例。
 
 ## v0.1.1
 
