@@ -14,9 +14,19 @@ from sqlalchemy.orm import Session
 logger = logging.getLogger(__name__)
 
 
-def queue_callback(db: Session, order: Order) -> CallbackAttempt | None:
+def queue_callback(db: Session, order: Order, *, commit: bool = True) -> CallbackAttempt | None:
     if not order.notify_url:
         return None
+    # A payment must have at most one active callback task. The order lock held
+    # by the caller serializes this check with concurrent payment notifications.
+    existing = db.scalar(
+        select(CallbackAttempt).where(
+            CallbackAttempt.order_id == order.id,
+            CallbackAttempt.status.in_(["pending", "processing", "success"]),
+        ).limit(1)
+    )
+    if existing:
+        return existing
     attempt = CallbackAttempt(
         order_id=order.id,
         callback_url=order.notify_url,
@@ -25,7 +35,8 @@ def queue_callback(db: Session, order: Order) -> CallbackAttempt | None:
     order.status = OrderStatus.CALLBACK_PENDING
     db.add(attempt)
     db.add(PaymentEvent(order_id=order.id, event_type="callback.queued", payload={}))
-    db.commit()
+    if commit:
+        db.commit()
     return attempt
 
 

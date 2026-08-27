@@ -4,6 +4,7 @@ from app.models import Order, OrderStatus, PaymentEvent, PaymentNotification
 from app.schemas.payment import NotificationCreate
 from app.services.callbacks import queue_callback
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 
@@ -19,8 +20,17 @@ def handle_notification(db: Session, payload: NotificationCreate) -> PaymentNoti
         raw_payload=payload.raw_payload,
         notification_time=payload.notification_time or datetime.now(UTC),
     )
-    db.add(notification)
-    db.flush()
+    # Let the unique constraint arbitrate concurrent duplicate notifications.
+    # A savepoint keeps the caller transaction usable when another request wins.
+    try:
+        with db.begin_nested():
+            db.add(notification)
+            db.flush()
+    except IntegrityError:
+        existing = db.scalar(select(PaymentNotification).where(PaymentNotification.external_id == payload.external_id))
+        if existing:
+            return existing
+        raise
     order = db.scalar(
         select(Order).where(
             Order.channel_id == payload.channel_id,
@@ -42,7 +52,7 @@ def handle_notification(db: Session, payload: NotificationCreate) -> PaymentNoti
         "external_id": payload.external_id,
         "amount": str(payload.amount),
     }))
+    queue_callback(db, order, commit=False)
     db.commit()
     db.refresh(notification)
-    queue_callback(db, order)
     return notification
