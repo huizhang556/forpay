@@ -61,18 +61,20 @@ async def deliver_callback(db: Session, attempt: CallbackAttempt) -> bool:
         attempt.response_body = response.text[:2000]
         attempt.attempt_count += 1
         success = 200 <= response.status_code < 300
-    except httpx.HTTPError as exc:
+    except (httpx.HTTPError, ValueError) as exc:
         logger.warning("callback delivery failed", extra={"attempt_id": attempt.id, "error": str(exc)[:200]})
         attempt.response_body = str(exc)[:2000]
         attempt.attempt_count += 1
         success = False
     if success:
         attempt.status = "success"
+        attempt.processing_at = None
         order = db.get(Order, attempt.order_id)
         if order:
             order.status = OrderStatus.CALLBACK_SUCCESS
     else:
         attempt.status = "failed" if attempt.attempt_count >= 8 else "pending"
+        attempt.processing_at = None
         attempt.next_retry_at = datetime.now(UTC) + timedelta(minutes=min(attempt.attempt_count * 2, 30))
     db.commit()
     logger.info("callback delivery completed", extra={"attempt_id": attempt.id, "success": success, "attempt_count": attempt.attempt_count})
