@@ -90,8 +90,12 @@
 
 ### 新增本地开发指南
 
-- 新增一级目录文件 `local_develop_guid.md`，供开发者和二次开发者本地查阅。
+- 新增一级目录文件 `LOCAL_DEVELOP_GUID.md`，仅供开发者本地记录开发细节和提交问题。
 - 该文件已加入 `.gitignore`，不上传 GitHub/Docker Hub，也不出现在用户部署文档中。
+
+### 清理重复开发文档
+
+- 删除早期创建的 `docs/DEVELOPMENT.md`，避免与本地开发记录文件重复。
 
 ## v0.1.2
 
