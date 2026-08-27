@@ -122,9 +122,10 @@ Compose 容器之间使用服务名通信，`FORPAY_DATABASE_URL` 中的主机�
 
 ```dotenv
 FORPAY_APP_NAME=ForPay
+POSTGRES_PASSWORD=替换为强随机数据库密码
 FORPAY_ENVIRONMENT=production
 FORPAY_PUBLIC_BASE_URL=https://pay.example.com
-FORPAY_DATABASE_URL=postgresql+psycopg://forpay:修改数据库密码@postgres:5432/forpay
+FORPAY_DATABASE_URL=postgresql+psycopg://forpay:${POSTGRES_PASSWORD}@postgres:5432/forpay
 FORPAY_REDIS_URL=redis://redis:6379/0
 FORPAY_CORS_ORIGINS=https://pay.example.com
 FORPAY_SESSION_SECRET=替换为至少32位随机字符串
@@ -145,6 +146,8 @@ FORPAY_UPDATE_PUBLIC_KEY=
 ```
 
 `FORPAY_SESSION_SECRET`、`FORPAY_ADMIN_TOKEN`、`FORPAY_MONITOR_TOKEN` 和 `FORPAY_ENCRYPTION_KEY` 必须是四个不同的随机值。不要照抄示例中的占位文字；可以使用 `openssl rand -hex 32` 生成。
+
+`POSTGRES_PASSWORD` 是 Compose PostgreSQL 的必选密码，必须替换为强随机值。Compose 会用它同时设置数据库容器密码和 API/worker 的连接串；不要在 `FORPAY_DATABASE_URL` 中写死默认密码。密码包含 `@`、`:`、`/` 等 URL 保留字符时，请先进行 URL 编码。
 
 ### 安装和启动
 

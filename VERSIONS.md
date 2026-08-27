@@ -19,6 +19,13 @@
 - 增加 Alembic 迁移 `a1b2c3d4e5f6_callback_processing_lease`。
 - 验证：Ruff 检查通过，Pytest 15 项通过。
 
+### Compose 生产配置安全修正
+
+- 移除 Compose 中写死的 PostgreSQL 默认密码，新增必选 `POSTGRES_PASSWORD` 配置。
+- API、worker 与 PostgreSQL 容器统一使用 `POSTGRES_PASSWORD` 生成连接配置，避免 `.env` 密码被覆盖。
+- 修正文档中的 API 默认端口说明为 7500，并补充密码 URL 编码提示。
+- 验证：Ruff 检查通过，Pytest 15 项通过，`docker compose config` 通过。
+
 ### 本次发布：部署、会话与更新安全完善
 
 - Compose 应用和 worker 镜像统一使用 `forpay`，并修复旧容器切换及 worker 健康检查问题。
