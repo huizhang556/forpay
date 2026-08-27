@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+*.coverage
 node_modules/
 frontend/dist/
 data/

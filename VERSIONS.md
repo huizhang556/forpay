@@ -26,6 +26,13 @@
 - 修正文档中的 API 默认端口说明为 7500，并补充密码 URL 编码提示。
 - 验证：Ruff 检查通过，Pytest 15 项通过，`docker compose config` 通过。
 
+### 容器供应链与运行权限加固
+
+- 前端镜像依赖安装改用 `npm ci`，提高构建可复现性。
+- 生产 Python 镜像仅安装运行时依赖，不再安装 dev 依赖。
+- API 和 worker 容器改用非 root 的 `forpay` 用户运行，并限制应用目录权限。
+- 验证：Ruff 检查通过，Docker 镜像构建成功。
+
 ### 本次发布：部署、会话与更新安全完善
 
 - Compose 应用和 worker 镜像统一使用 `forpay`，并修复旧容器切换及 worker 健康检查问题。

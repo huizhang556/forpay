@@ -1,7 +1,7 @@
 FROM node:24-alpine AS frontend
 WORKDIR /build/frontend
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
@@ -15,7 +15,10 @@ COPY backend/ ./backend/
 COPY scripts/start-api.sh ./scripts/start-api.sh
 COPY scripts/migrate.py ./scripts/migrate.py
 COPY --from=frontend /build/frontend/dist ./frontend/dist
-RUN pip install --no-cache-dir ".[dev]"
+RUN pip install --no-cache-dir "."
+RUN addgroup --system forpay && adduser --system --ingroup forpay forpay \
+    && chown -R forpay:forpay /app
+USER forpay
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s CMD curl -fsS http://127.0.0.1:8000/api/health || exit 1
 CMD ["sh", "/app/scripts/start-api.sh"]
