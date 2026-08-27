@@ -159,6 +159,8 @@ FORPAY_WAF_ENABLED=true
 
 `POSTGRES_PASSWORD` 是 Compose PostgreSQL 的必选密码，必须替换为强随机值。Compose 会用它同时设置数据库容器密码和 API/worker 的连接串；不要在 `FORPAY_DATABASE_URL` 中写死默认密码。密码包含 `@`、`:`、`/` 等 URL 保留字符时，请先进行 URL 编码。
 
+一键脚本会在拉取镜像前校验 Compose 配置，并尝试访问 `https://registry-1.docker.io/v2/`。该地址返回 `401` 也表示 Docker Hub 网络可达；如果提示连接失败或超时，应先处理服务器 DNS、出口防火墙或 Docker 代理，再继续安装。首次拉取三个镜像可能耗时较长，请等待脚本的 3 次重试完成，不要在中途按 `Ctrl+C`。
+
 ### Compose 安装和启动
 
 以下是手动 Compose 部署流程；不需要使用 `--build`，远程镜像会从 Docker Hub 拉取。

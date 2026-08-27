@@ -37,6 +37,23 @@ set_env_if_placeholder FORPAY_ENCRYPTION_KEY "$(openssl rand -hex 32)"
 chmod 600 .env
 
 echo "配置已生成到 .env。请先确认 FORPAY_PUBLIC_BASE_URL、FORPAY_CORS_ORIGINS 和 FORPAY_ENVIRONMENT。"
+# 先校验变量和 Compose 文件，避免网络拉取完成后才发现配置错误。
+docker compose config --quiet
+
+check_registry() {
+    if ! command -v curl >/dev/null; then
+        echo "未找到 curl，跳过 Docker Hub 连通性预检。"
+        return 0
+    fi
+    local status
+    status="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 --max-time 20 https://registry-1.docker.io/v2/ || true)"
+    if [[ "$status" != "200" && "$status" != "401" ]]; then
+        echo "警告：无法正常访问 Docker Hub（HTTP 状态：${status:-连接失败}）。镜像拉取可能因网络超时失败。" >&2
+        echo "请检查 DNS、服务器公网出口、防火墙或 Docker 代理后重试。" >&2
+    fi
+}
+check_registry
+
 pull_images() {
     local attempt
     for attempt in 1 2 3; do
@@ -48,7 +65,6 @@ pull_images() {
     return 1
 }
 pull_images
-docker compose config --quiet
 docker compose up -d
 docker compose ps
 echo "安装完成。健康检查：curl http://127.0.0.1:${FORPAY_API_PORT:-7500}/api/health"
