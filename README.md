@@ -161,6 +161,29 @@ FORPAY_WAF_ENABLED=true
 
 一键脚本会在拉取镜像前校验 Compose 配置，并尝试访问 `https://registry-1.docker.io/v2/`。该地址返回 `401` 也表示 Docker Hub 网络可达；如果提示连接失败或超时，应先处理服务器 DNS、出口防火墙或 Docker 代理，再继续安装。首次拉取三个镜像可能耗时较长，请等待脚本的 3 次重试完成，不要在中途按 `Ctrl+C`。
 
+#### 按服务器所在地选择镜像源
+
+- **海外或可稳定访问 Docker Hub 的服务器**：保持 `.env` 中的 `FORPAY_IMAGE=litehub/forpay:latest`，直接执行安装脚本即可。脚本会预检 `registry-1.docker.io`，然后拉取 ForPay、PostgreSQL 和 Redis 镜像。
+- **中国大陆服务器**：建议先为 Docker Engine 配置所在云厂商或组织提供的可信 registry mirror，再执行安装脚本。编辑 `/etc/docker/daemon.json`（没有则创建），示例：
+
+```json
+{
+  "registry-mirrors": ["https://你的可信镜像加速地址"]
+}
+```
+
+配置后执行：
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+docker info | sed -n '/Registry Mirrors:/,/Live Restore Enabled/p'
+```
+
+确认 `docker info` 能看到加速地址后，再运行 `./scripts/install.sh`。脚本会识别已配置的 registry mirror，不再把 Docker Hub 直连失败误报为应用故障。加速地址应使用可信服务商提供的 HTTPS 地址，不要随意使用来源不明的公共代理。
+
+如果所在网络无法访问 Docker Hub 且没有可用加速源，可以把 ForPay 镜像通过可信的企业私有仓库同步后，在 `.env` 设置 `FORPAY_IMAGE=registry.example.com/forpay:latest`；PostgreSQL 和 Redis 也需要同步到同一可访问仓库，并相应修改 Compose 镜像地址。
+
 ### Compose 安装和启动
 
 以下是手动 Compose 部署流程；不需要使用 `--build`，远程镜像会从 Docker Hub 拉取。

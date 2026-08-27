@@ -41,6 +41,13 @@ echo "配置已生成到 .env。请先确认 FORPAY_PUBLIC_BASE_URL、FORPAY_COR
 docker compose config --quiet
 
 check_registry() {
+    local mirrors
+    mirrors="$(docker info --format '{{json .RegistryConfig.Mirrors}}' 2>/dev/null || true)"
+    if [[ -n "$mirrors" && "$mirrors" != "null" && "$mirrors" != "[]" ]]; then
+        echo "检测到 Docker 已配置镜像加速：${mirrors}"
+        echo "将通过 Docker 加速源拉取镜像，跳过 Docker Hub 直连预检。"
+        return 0
+    fi
     if ! command -v curl >/dev/null; then
         echo "未找到 curl，跳过 Docker Hub 连通性预检。"
         return 0
