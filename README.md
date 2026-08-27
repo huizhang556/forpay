@@ -114,7 +114,35 @@ chmod +x scripts/dev.sh
 - [ ] 已完成数据库和 `data/` 备份，并验证备份文件可读取。
 - [ ] `FORPAY_API_PORT` 未被其他进程占用，Nginx upstream 与该端口一致。
 
-## Docker Compose 部署（推荐）
+## 三种部署方式
+
+ForPay 提供三种 Linux 部署方式，请根据使用场景选择：
+
+| 方式 | 推荐对象 | 特点 |
+| --- | --- | --- |
+| 一键脚本安装 | 不熟悉 Linux/Docker 的用户 | 自动生成密钥、拉取镜像并启动服务 |
+| Docker Compose 部署 | 生产环境用户（推荐） | 配置透明、易维护，适合长期运行 |
+| Linux 本地源码部署 | 开发者和二次开发者 | 便于修改代码和调试，需要自行维护依赖 |
+
+### 方式一：一键脚本安装（小白推荐）
+
+适用于已经安装 Docker Engine 和 Compose 插件的 Linux 主机。脚本会自动生成缺失的数据库密码和应用密钥，但域名、HTTPS 和 CORS 仍需按实际环境检查。
+
+```bash
+chmod +x scripts/install.sh scripts/update.sh scripts/uninstall.sh
+./scripts/install.sh
+```
+
+更新和卸载：
+
+```bash
+./scripts/update.sh
+./scripts/uninstall.sh
+```
+
+卸载时脚本会询问是否保留数据；只有选择不保留并输入 `DELETE-FORPAY`，才会删除数据库和 Redis 数据卷。
+
+### 方式二：Docker Compose 部署（推荐）
 
 ### Docker Compose 配置示例
 
@@ -149,30 +177,9 @@ FORPAY_UPDATE_PUBLIC_KEY=
 
 `POSTGRES_PASSWORD` 是 Compose PostgreSQL 的必选密码，必须替换为强随机值。Compose 会用它同时设置数据库容器密码和 API/worker 的连接串；不要在 `FORPAY_DATABASE_URL` 中写死默认密码。密码包含 `@`、`:`、`/` 等 URL 保留字符时，请先进行 URL 编码。
 
-### 安装和启动
+### Compose 安装和启动
 
-为降低首次部署门槛，项目提供三个 Linux 脚本。脚本只操作当前项目目录和 Docker Compose，不会自动推送 GitHub 或 Docker Hub。
-
-首次安装（脚本会生成缺失的数据库密码和应用密钥，并自动启动服务）：
-
-```bash
-chmod +x scripts/install.sh scripts/update.sh scripts/uninstall.sh
-./scripts/install.sh
-```
-
-在线更新（先备份 PostgreSQL 和二维码文件，再拉取 `latest` 镜像）：
-
-```bash
-./scripts/update.sh
-```
-
-卸载脚本会先询问是否保留数据。选择 `Y` 只移除容器并保留数据卷；选择 `N` 时还必须输入 `DELETE-FORPAY` 才会删除数据：
-
-```bash
-./scripts/uninstall.sh
-```
-
-也可以直接使用 `--purge-data` 进入删除确认流程。删除操作会永久删除 PostgreSQL/Redis Docker 数据卷，执行前必须确认已有可用备份。
+以下是手动 Compose 部署流程；不需要使用 `--build`，远程镜像会从 Docker Hub 拉取。
 
 ```bash
 sudo apt update
@@ -220,7 +227,7 @@ docker compose up -d
 
 不要执行 `docker compose down -v`，除非确认要永久删除数据库和 Redis 数据卷。升级前必须备份数据库和 `data/` 目录。
 
-## Linux 源码部署
+### 方式三：Linux 本地源码部署
 
 源码部署适合需要审查和修改代码的场景，生产环境仍建议优先使用 Compose。安装 Python 3.12、Node.js 20、PostgreSQL 16、Redis 7、Nginx 和 uv，然后执行：
 
