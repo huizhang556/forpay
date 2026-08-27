@@ -191,6 +191,8 @@ curl http://127.0.0.1:7500/api/health
 
 如果启动时报 `Bind for 0.0.0.0:7500 failed: port is already allocated`，先执行 `docker ps --filter publish=7500` 和 `ss -ltnp | grep :7500` 定位占用者。确认是旧 ForPay 容器后再执行 `docker compose down`（不要加 `-v`）；如果是其他服务，在 `.env` 将 `FORPAY_API_PORT` 改为例如 `7501`，重新执行 `docker compose up -d`，并同步把 Nginx 的 upstream 改为 `127.0.0.1:7501`。
 
+如果 `docker compose pull` 报 `TLS handshake timeout`、`failed to resolve reference` 或 `registry-1.docker.io` 超时，这是服务器访问 Docker Hub 的网络问题，不是应用功能故障。先测试 `curl -I https://registry-1.docker.io/v2/` 和 `docker pull redis:7-alpine`；确认服务器 DNS、出口防火墙和代理设置正常，必要时为 Docker Engine 配置可信镜像加速地址后重启 Docker，再重新执行安装或更新脚本。脚本本身会自动重试 3 次，但不会绕过网络限制。
+
 上面是 Docker Hub 远程镜像部署流程，不需要 `--build`。Compose 默认读取 `FORPAY_IMAGE=litehub/forpay:latest`，并从 Docker Hub 拉取远端最新版本。
 执行 `docker compose config --images` 时，app 和 worker 应显示 `litehub/forpay:latest`；如果显示 `forpay:local` 或其他地址，请先修正 `.env` 中的 `FORPAY_IMAGE`。生产环境如需可复现部署，可将其改为具体版本或镜像 digest。
 

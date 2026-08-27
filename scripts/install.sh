@@ -37,7 +37,17 @@ set_env_if_placeholder FORPAY_ENCRYPTION_KEY "$(openssl rand -hex 32)"
 chmod 600 .env
 
 echo "配置已生成到 .env。请先确认 FORPAY_PUBLIC_BASE_URL、FORPAY_CORS_ORIGINS 和 FORPAY_ENVIRONMENT。"
-docker compose pull
+pull_images() {
+    local attempt
+    for attempt in 1 2 3; do
+        if docker compose pull; then return 0; fi
+        echo "镜像拉取失败，第 ${attempt}/3 次重试；请检查服务器 DNS、代理和 Docker Hub 出口。" >&2
+        sleep $((attempt * 5))
+    done
+    echo "镜像拉取连续失败。可先配置 Docker 镜像加速或代理后重新执行本脚本。" >&2
+    return 1
+}
+pull_images
 docker compose config --quiet
 docker compose up -d
 docker compose ps

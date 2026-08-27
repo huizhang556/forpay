@@ -16,7 +16,17 @@ if [[ -d data/qr ]]; then
     cp -a data/qr "$BACKUP_DIR/qr"
 fi
 
-docker compose pull
+pull_images() {
+    local attempt
+    for attempt in 1 2 3; do
+        if docker compose pull; then return 0; fi
+        echo "镜像拉取失败，第 ${attempt}/3 次重试；请检查服务器 DNS、代理和 Docker Hub 出口。" >&2
+        sleep $((attempt * 5))
+    done
+    echo "镜像拉取连续失败，服务未更新。备份仍保留在 $BACKUP_DIR。" >&2
+    return 1
+}
+pull_images
 docker compose config --quiet
 docker compose up -d
 docker compose ps
