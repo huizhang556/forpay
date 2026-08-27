@@ -331,7 +331,6 @@ server {
 - [部署文档](docs/DEPLOYMENT.md)
 - [安全模型](docs/SECURITY.md)
 - [故障排查](docs/TROUBLESHOOTING.md)
-- [维护者本地开发指南](LOCAL_DEVELOPMENT.md)
 
 ## 许可证
 
