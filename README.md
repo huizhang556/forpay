@@ -89,7 +89,7 @@ chmod +x scripts/dev.sh
 ./scripts/dev.sh
 ```
 
-启动成功后访问 `http://localhost:5173`，API 文档访问 `http://127.0.0.1:8000/docs`。只有需要自定义端口、数据库或密钥时才需要提前编辑 `.env`。
+启动成功后访问 `http://localhost:5173`，API 文档访问 `http://127.0.0.1:7500/docs`。只有需要自定义端口、数据库或密钥时才需要提前编辑 `.env`。
 
 ## 部署总流程
 
@@ -102,7 +102,7 @@ chmod +x scripts/dev.sh
 5. 创建收款通道、上传二维码、创建商品并完成一笔测试订单，确认到账通知、金额匹配和回调链路。
 6. 上线后定期备份 PostgreSQL 与 `data/`，升级前先停写、备份、迁移，再执行回归检查。
 
-配置优先级：安全密钥、数据库、Redis、公开 HTTPS 地址和 CORS 是必选项；连接池、限流、WAF、指标和在线更新属于建议项；`FORPAY_API_PORT` 默认 8000，端口冲突时改为未占用端口；开发服务器和 API 文档仅限内网或本机使用。
+配置优先级：安全密钥、数据库、Redis、公开 HTTPS 地址和 CORS 是必选项；连接池、限流、WAF、指标和在线更新属于建议项；`FORPAY_API_PORT` 默认 7500，端口冲突时改为未占用端口；开发服务器和 API 文档仅限内网或本机使用。
 
 ### 上线前检查清单
 
@@ -160,10 +160,10 @@ docker compose pull
 docker compose config --images
 docker compose up -d
 docker compose ps
-curl http://127.0.0.1:8000/api/health
+curl http://127.0.0.1:7500/api/health
 ```
 
-如果启动时报 `Bind for 0.0.0.0:8000 failed: port is already allocated`，先执行 `docker ps --filter publish=8000` 和 `ss -ltnp | grep :8000` 定位占用者。确认是旧 ForPay 容器后再执行 `docker compose down`（不要加 `-v`）；如果是其他服务，在 `.env` 将 `FORPAY_API_PORT` 改为例如 `8001`，重新执行 `docker compose up -d`，并同步把 Nginx 的 upstream 改为 `127.0.0.1:8001`。
+如果启动时报 `Bind for 0.0.0.0:7500 failed: port is already allocated`，先执行 `docker ps --filter publish=7500` 和 `ss -ltnp | grep :7500` 定位占用者。确认是旧 ForPay 容器后再执行 `docker compose down`（不要加 `-v`）；如果是其他服务，在 `.env` 将 `FORPAY_API_PORT` 改为例如 `7501`，重新执行 `docker compose up -d`，并同步把 Nginx 的 upstream 改为 `127.0.0.1:7501`。
 
 上面是 Docker Hub 远程镜像部署流程，不需要 `--build`。Compose 默认读取 `FORPAY_IMAGE=litehub/forpay:latest`，并从 Docker Hub 拉取远端最新版本。
 执行 `docker compose config --images` 时，app 和 worker 应显示 `litehub/forpay:latest`；如果显示 `forpay:local` 或其他地址，请先修正 `.env` 中的 `FORPAY_IMAGE`。生产环境如需可复现部署，可将其改为具体版本或镜像 digest。
@@ -251,7 +251,7 @@ server {
     proxy_set_header X-Forwarded-Proto https;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     location / {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:7500;
         proxy_http_version 1.1;
         proxy_read_timeout 30s;
     }

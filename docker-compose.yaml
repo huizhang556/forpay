@@ -3,7 +3,7 @@ services:
   app:
     build: .
     image: ${FORPAY_IMAGE:-litehub/forpay:latest}
-    ports: ["127.0.0.1:${FORPAY_API_PORT:-8000}:8000"]
+    ports: ["127.0.0.1:${FORPAY_API_PORT:-7500}:8000"]
     env_file: .env
     environment:
       FORPAY_DATABASE_URL: postgresql+psycopg://forpay:forpay@postgres:5432/forpay
