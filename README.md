@@ -162,8 +162,8 @@ docker compose ps
 curl http://127.0.0.1:8000/api/health
 ```
 
-上面是 Docker Hub 远程镜像部署流程，不需要 `--build`。Compose 默认读取 `FORPAY_IMAGE=litehub/forpay:0.1.2`，并从 Docker Hub 拉取对应版本。
-执行 `docker compose config --images` 时，app 和 worker 应显示 `litehub/forpay:0.1.2`；如果显示 `forpay:local` 或其他地址，请先修正 `.env` 中的 `FORPAY_IMAGE`。
+上面是 Docker Hub 远程镜像部署流程，不需要 `--build`。Compose 默认读取 `FORPAY_IMAGE=litehub/forpay:latest`，并从 Docker Hub 拉取远端最新版本。
+执行 `docker compose config --images` 时，app 和 worker 应显示 `litehub/forpay:latest`；如果显示 `forpay:local` 或其他地址，请先修正 `.env` 中的 `FORPAY_IMAGE`。生产环境如需可复现部署，可将其改为具体版本或镜像 digest。
 
 如果需要使用本地源码构建，先将 `.env` 中的 `FORPAY_IMAGE` 改为 `forpay:local`，不要执行 `docker compose pull`，再执行：
 
