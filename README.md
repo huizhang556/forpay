@@ -107,7 +107,11 @@ ForPay 提供三种 Linux 部署方式，请根据使用场景选择：
 
 适用于已经安装 Docker Engine 和 Compose 插件的 Linux 主机。脚本会自动生成缺失的数据库密码和应用密钥，但域名、HTTPS 和 CORS 仍需按实际环境检查。
 
+三个脚本已经随项目源码发布，位于仓库根目录的 `scripts/` 文件夹：[`install.sh`](scripts/install.sh)、[`update.sh`](scripts/update.sh)、[`uninstall.sh`](scripts/uninstall.sh)。用户先从 GitHub 获取源码并进入项目目录，之后即可执行脚本：
+
 ```bash
+git clone https://github.com/huizhang556/forpay.git
+cd forpay
 chmod +x scripts/install.sh scripts/update.sh scripts/uninstall.sh
 ./scripts/install.sh
 ```
