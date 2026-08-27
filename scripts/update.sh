@@ -7,6 +7,23 @@ command -v docker >/dev/null || { echo "未找到 docker。" >&2; exit 1; }
 docker compose version >/dev/null || { echo "未找到 docker compose 插件。" >&2; exit 1; }
 [[ -f .env ]] || { echo "缺少 .env，请先执行 scripts/install.sh。" >&2; exit 1; }
 
+check_registry() {
+    local mirrors
+    mirrors="$(docker info --format '{{json .RegistryConfig.Mirrors}}' 2>/dev/null || true)"
+    if [[ -n "$mirrors" && "$mirrors" != "null" && "$mirrors" != "[]" ]]; then
+        echo "检测到 Docker 镜像加速，将通过加速源拉取镜像。"
+        return 0
+    fi
+    if command -v curl >/dev/null; then
+        local status
+        status="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 --max-time 20 https://registry-1.docker.io/v2/ || true)"
+        if [[ "$status" != "200" && "$status" != "401" ]]; then
+            echo "警告：Docker Hub 当前不可达（HTTP 状态：${status:-连接失败}），更新可能失败。" >&2
+        fi
+    fi
+}
+check_registry
+
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP_DIR="data/backups/$STAMP"
 mkdir -p "$BACKUP_DIR"

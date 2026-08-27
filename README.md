@@ -107,12 +107,12 @@ ForPay 提供三种 Linux 部署方式，请根据使用场景选择：
 
 适用于已经安装 Docker Engine 和 Compose 插件的 Linux 主机。脚本会自动生成缺失的数据库密码和应用密钥，但域名、HTTPS 和 CORS 仍需按实际环境检查。
 
-三个脚本已经随项目源码发布，位于仓库根目录的 `scripts/` 文件夹：[`install.sh`](scripts/install.sh)、[`update.sh`](scripts/update.sh)、[`uninstall.sh`](scripts/uninstall.sh)。用户先从 GitHub 获取源码并进入项目目录，之后即可执行脚本：
+四个脚本已经随项目源码发布，位于仓库根目录的 `scripts/` 文件夹：[`install.sh`](scripts/install.sh)、[`update.sh`](scripts/update.sh)、[`backup-migrate.sh`](scripts/backup-migrate.sh)、[`uninstall.sh`](scripts/uninstall.sh)。用户先从 GitHub 获取源码并进入项目目录，之后即可执行脚本：
 
 ```bash
 git clone https://github.com/huizhang556/forpay.git
 cd forpay
-chmod +x scripts/install.sh scripts/update.sh scripts/uninstall.sh
+chmod +x scripts/install.sh scripts/update.sh scripts/backup-migrate.sh scripts/uninstall.sh
 ./scripts/install.sh
 ```
 
@@ -120,8 +120,11 @@ chmod +x scripts/install.sh scripts/update.sh scripts/uninstall.sh
 
 ```bash
 ./scripts/update.sh
+./scripts/backup-migrate.sh
 ./scripts/uninstall.sh
 ```
+
+`backup-migrate.sh` 会先导出 PostgreSQL、复制 `data/qr` 和运行配置 `.env`，生成加密传输前应妥善保管的压缩包。选择 `1` 可保存到本机指定目录；选择 `2` 时再输入目标服务器用户、IP/域名、SSH 端口和目标路径，脚本通过 SSH 创建目录并使用 `scp` 复制压缩包。目标服务器需提前安装并启用 SSH，建议使用密钥认证；迁移完成后应在目标机执行恢复演练，确认数据库和二维码可用。
 
 卸载时脚本会询问是否保留数据；只有选择不保留并输入 `DELETE-FORPAY`，才会删除数据库和 Redis 数据卷。
 
