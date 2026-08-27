@@ -72,25 +72,6 @@ chmod 600 .env
 
 生产环境会拒绝默认密钥。不要把 `.env`、数据库、二维码、备份和真实到账通知提交到 Git。
 
-## 一键本地开发
-
-本地开发只需要预先安装 Docker、uv 和 Node.js。脚本会自动创建 `.env`（不存在时）、启动 PostgreSQL/Redis、安装依赖、执行数据库迁移、启动 API 和前端，并尝试打开开发页面。开发日志写入被 Git 忽略的 `.local-notes/`，按 `Ctrl+C` 停止时不会删除数据库数据。
-
-Windows PowerShell：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/dev.ps1
-```
-
-Linux：
-
-```bash
-chmod +x scripts/dev.sh
-./scripts/dev.sh
-```
-
-启动成功后访问 `http://localhost:5173`，API 文档访问 `http://127.0.0.1:7500/docs`。只有需要自定义端口、数据库或密钥时才需要提前编辑 `.env`。
-
 ## 部署总流程
 
 无论选择哪种方式，生产部署都按以下顺序执行：
