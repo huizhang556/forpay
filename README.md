@@ -67,8 +67,6 @@ chmod 600 .env
 | `FORPAY_ENCRYPTION_KEY` | 敏感数据加密密钥，生产必填且不能与其他密钥复用 |
 | `FORPAY_ORDER_TTL_MINUTES` | 订单有效期，建议 10 至 15 分钟 |
 | `FORPAY_AMOUNT_SUFFIX_CENTS` | 金额尾数步长 |
-| `FORPAY_UPDATE_MANIFEST_URL` | 签名更新清单地址，留空关闭检查 |
-| `FORPAY_UPDATE_PUBLIC_KEY` | 更新清单 Ed25519 公钥 |
 
 生产环境会拒绝默认密钥。不要把 `.env`、数据库、二维码、备份和真实到账通知提交到 Git。
 
@@ -83,7 +81,7 @@ chmod 600 .env
 5. 创建收款通道、上传二维码、创建商品并完成一笔测试订单，确认到账通知、金额匹配和回调链路。
 6. 上线后定期备份 PostgreSQL 与 `data/`，升级前先停写、备份、迁移，再执行回归检查。
 
-配置优先级：安全密钥、数据库、Redis、公开 HTTPS 地址和 CORS 是必选项；连接池、限流、WAF、指标和在线更新属于建议项；`FORPAY_API_PORT` 默认 7500，端口冲突时改为未占用端口；开发服务器和 API 文档仅限内网或本机使用。
+配置优先级：安全密钥、数据库、Redis、公开 HTTPS 地址和 CORS 是必选项；连接池、限流、WAF 和指标属于建议项；更新请使用下文对应部署方式的更新流程。`FORPAY_API_PORT` 默认 7500，端口冲突时改为未占用端口；API 文档仅限内网或本机使用。
 
 ### 上线前检查清单
 
@@ -114,7 +112,7 @@ chmod +x scripts/install.sh scripts/update.sh scripts/uninstall.sh
 ./scripts/install.sh
 ```
 
-更新和卸载：
+#### 一键脚本在线更新与卸载
 
 ```bash
 ./scripts/update.sh
@@ -132,6 +130,7 @@ Compose 容器之间使用服务名通信，`FORPAY_DATABASE_URL` 中的主机�
 ```dotenv
 FORPAY_APP_NAME=ForPay
 POSTGRES_PASSWORD=替换为强随机数据库密码
+FORPAY_API_PORT=7500
 FORPAY_ENVIRONMENT=production
 FORPAY_PUBLIC_BASE_URL=https://pay.example.com
 FORPAY_DATABASE_URL=postgresql+psycopg://forpay:${POSTGRES_PASSWORD}@postgres:5432/forpay
@@ -150,8 +149,6 @@ FORPAY_DB_MAX_OVERFLOW=20
 FORPAY_DB_POOL_TIMEOUT=30
 FORPAY_METRICS_ENABLED=true
 FORPAY_WAF_ENABLED=true
-FORPAY_UPDATE_MANIFEST_URL=
-FORPAY_UPDATE_PUBLIC_KEY=
 ```
 
 `FORPAY_SESSION_SECRET`、`FORPAY_ADMIN_TOKEN`、`FORPAY_MONITOR_TOKEN` 和 `FORPAY_ENCRYPTION_KEY` 必须是四个不同的随机值。不要照抄示例中的占位文字；可以使用 `openssl rand -hex 32` 生成。
@@ -191,6 +188,17 @@ docker compose build
 docker compose up -d
 ```
 
+#### Compose 在线更新
+
+```bash
+docker compose exec -T postgres pg_dump -U forpay -d forpay -Fc > "data/backups/$(date -u +%Y%m%dT%H%M%SZ).dump"
+docker compose pull
+docker compose up -d
+docker compose ps
+```
+
+更新前必须确认数据库和 `data/` 已备份；远程镜像部署不需要 `--build`。
+
 首次启动时 app 会先使用镜像内的 `/app/alembic.ini` 执行数据库迁移，再启动 API；如果 app 显示 unhealthy，先查看 `docker compose logs app` 中的迁移错误，不要直接删除数据库数据卷。
 
 Compose 会启动 `app`、`worker`、`postgres` 和 `redis`。API、数据库和 Redis 默认只绑定回环地址；不要改成 `0.0.0.0`。
@@ -218,6 +226,7 @@ docker compose up -d
 
 ```dotenv
 FORPAY_APP_NAME=ForPay
+FORPAY_API_PORT=7500
 FORPAY_ENVIRONMENT=production
 FORPAY_PUBLIC_BASE_URL=https://pay.example.com
 FORPAY_DATABASE_URL=postgresql+psycopg://forpay:修改数据库密码@127.0.0.1:5432/forpay
@@ -236,8 +245,6 @@ FORPAY_DB_MAX_OVERFLOW=20
 FORPAY_DB_POOL_TIMEOUT=30
 FORPAY_METRICS_ENABLED=true
 FORPAY_WAF_ENABLED=true
-FORPAY_UPDATE_MANIFEST_URL=
-FORPAY_UPDATE_PUBLIC_KEY=
 ```
 
 源码部署必须先在 PostgreSQL 中创建 `forpay` 用户和数据库，再执行 Alembic 迁移。API 和 worker 使用同一个 `.env`，不要为 worker 创建另一套密钥。`.env` 文件应属于运行用户并设置为 `chmod 600`。
@@ -250,6 +257,18 @@ uv sync --extra dev
 cd frontend && npm ci && npm run build && cd ..
 uv run alembic -c alembic.ini upgrade head
 ```
+
+#### 源码在线更新
+
+```bash
+git pull --ff-only origin main
+uv sync
+cd frontend && npm ci && npm run build && cd ..
+uv run alembic -c alembic.ini upgrade head
+sudo systemctl restart forpay-api forpay-worker
+```
+
+更新前先备份 PostgreSQL 和 `data/`，并在业务低峰期执行；`git pull --ff-only` 失败时不要强制覆盖本地修改。
 
 使用专用非 root 用户分别运行 API 和 worker，配置 systemd 的 `Restart=on-failure`、`NoNewPrivileges=true` 和最小 `ReadWritePaths`。
 
@@ -296,19 +315,6 @@ server {
 - 正式承载资金前必须完成 DNS 级 SSRF 防护、管理员 RBAC、Android 设备凭据、故障演练和备份恢复演练。
 
 详细要求见本 README 的“安全边界”和“部署前配置”章节。
-
-## 在线更新
-
-管理员可以调用 `GET /api/admin/update/check` 检查签名更新清单。清单通过 HTTPS 获取，并使用 Ed25519 公钥验证；包地址和 SHA-256 摘要也会校验。ForPay 不会在 API 进程中自动下载、解压或执行远程代码。更新前应备份 PostgreSQL 和 `data/`，再通过审核后的镜像或源码流程升级。
-
-## 测试和质量检查
-
-```bash
-uv run ruff check backend
-uv run pytest
-cd frontend && npm ci && npm run build && cd ..
-docker compose config --quiet
-```
 
 ## 版本记录
 
