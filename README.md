@@ -151,6 +151,30 @@ FORPAY_UPDATE_PUBLIC_KEY=
 
 ### 安装和启动
 
+为降低首次部署门槛，项目提供三个 Linux 脚本。脚本只操作当前项目目录和 Docker Compose，不会自动推送 GitHub 或 Docker Hub。
+
+首次安装（脚本会生成缺失的数据库密码和应用密钥，并自动启动服务）：
+
+```bash
+chmod +x scripts/install.sh scripts/update.sh scripts/uninstall.sh
+./scripts/install.sh
+```
+
+在线更新（先备份 PostgreSQL 和二维码文件，再拉取 `latest` 镜像）：
+
+```bash
+./scripts/update.sh
+```
+
+普通卸载会保留数据卷；只有明确确认后才删除数据：
+
+```bash
+./scripts/uninstall.sh
+./scripts/uninstall.sh --purge-data
+```
+
+`--purge-data` 会永久删除 PostgreSQL/Redis Docker 数据卷，执行前必须确认已有可用备份。
+
 ```bash
 sudo apt update
 sudo apt install -y git ca-certificates

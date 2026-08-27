@@ -33,6 +33,13 @@
 - API 和 worker 容器改用非 root 的 `forpay` 用户运行，并限制应用目录权限。
 - 验证：Ruff 检查通过，Docker 镜像构建成功。
 
+### Linux 一键运维脚本
+
+- 新增 `scripts/install.sh`：生成缺失密钥、校验 Compose 配置、拉取镜像并启动服务。
+- 新增 `scripts/update.sh`：更新前自动备份 PostgreSQL 和二维码文件，再拉取远程最新镜像。
+- 新增 `scripts/uninstall.sh`：默认保留数据卷，只有输入 `DELETE-FORPAY` 并使用 `--purge-data` 才删除数据。
+- 安装脚本重复执行时保留已有数据库密码和密钥，避免破坏现有数据卷。
+
 ### 本次发布：部署、会话与更新安全完善
 
 - Compose 应用和 worker 镜像统一使用 `forpay`，并修复旧容器切换及 worker 健康检查问题。
