@@ -11,6 +11,7 @@
 - 在线更新清单增加 HTTPS、DNS 解析和非公网地址 SSRF 防护。
 - README 补充统一部署流程、配置分级和生产上线检查清单。
 - 增加登录、登出和敏感接口鉴权测试，完成后端、前端和 Compose 构建验证。
+- 修正部署文档：远程镜像使用 `docker compose pull` 后再启动，源码构建单独使用 `FORPAY_IMAGE=forpay:local` 和 `docker compose build`，避免 `--build` 误导远程部署。
 
 ## v0.1.1
 

@@ -155,9 +155,19 @@ git clone https://github.com/huizhang556/forpay.git
 cd forpay
 cp .env.example .env
 nano .env
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 docker compose ps
 curl http://127.0.0.1:8000/api/health
+```
+
+上面是 Docker Hub 远程镜像部署流程，不需要 `--build`。Compose 默认读取 `FORPAY_IMAGE=litehub/forpay:0.1.2`，并从 Docker Hub 拉取对应版本。
+
+如果需要使用本地源码构建，先将 `.env` 中的 `FORPAY_IMAGE` 改为 `forpay:local`，再执行：
+
+```bash
+docker compose build
+docker compose up -d
 ```
 
 首次启动时 app 会先使用镜像内的 `/app/alembic.ini` 执行数据库迁移，再启动 API；如果 app 显示 unhealthy，先查看 `docker compose logs app` 中的迁移错误，不要直接删除数据库数据卷。

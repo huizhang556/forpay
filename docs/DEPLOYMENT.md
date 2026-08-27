@@ -14,7 +14,8 @@ ForPay 只支持 Linux。推荐 Docker Compose；需要二次开发时使用 Lin
 cp .env.example .env
 chmod 600 .env
 nano .env
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 docker compose ps
 curl http://127.0.0.1:8000/api/health
 ```

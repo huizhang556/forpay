@@ -2,7 +2,7 @@ name: forpay
 services:
   app:
     build: .
-    image: forpay
+    image: ${FORPAY_IMAGE:-litehub/forpay:0.1.2}
     ports: ["127.0.0.1:8000:8000"]
     env_file: .env
     environment:
@@ -20,7 +20,7 @@ services:
       start_period: 30s
   worker:
     build: .
-    image: forpay
+    image: ${FORPAY_IMAGE:-litehub/forpay:0.1.2}
     env_file: .env
     environment:
       FORPAY_DATABASE_URL: postgresql+psycopg://forpay:forpay@postgres:5432/forpay
