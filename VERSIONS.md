@@ -14,6 +14,7 @@
 - 修正部署文档：远程镜像使用 `docker compose pull` 后再启动，源码构建单独使用 `FORPAY_IMAGE=forpay:local` 和 `docker compose build`，避免 `--build` 误导远程部署。
 - 补充 `docker compose config --images` 镜像来源核对，明确远程拉取与本地源码构建的分界。
 - 远程部署默认镜像改为 `litehub/forpay:latest`，确保用户拉取远端持续发布的最新版本；生产环境仍可固定具体版本或 digest。
+- 增加可配置的 `FORPAY_API_PORT`，补充端口占用排查、切换和 Nginx upstream 同步说明。
 
 ## v0.1.1
 
